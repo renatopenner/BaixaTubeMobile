@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bt_bg">#12151A</color>
+    <color name="bt_accent">#D93025</color>
+    <color name="ic_launcher_background">#12151A</color>
+</resources>

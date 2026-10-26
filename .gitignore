@@ -1,0 +1,16 @@
+# build
+.gradle/
+build/
+app/build/
+dist/
+*.log
+local.properties
+
+# assinatura (nunca versionar)
+certs/
+keystore.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store

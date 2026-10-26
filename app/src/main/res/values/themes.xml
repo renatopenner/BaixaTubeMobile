@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.BaixaTube" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/bt_bg</item>
+        <item name="android:statusBarColor">@color/bt_bg</item>
+        <item name="android:navigationBarColor">@color/bt_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">@color/bt_accent</item>
+    </style>
+</resources>
