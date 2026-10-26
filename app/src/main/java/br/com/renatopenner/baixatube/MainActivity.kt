@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        handleShareIntent()
+        handleShareIntent(intent)
         setContent {
             var dark by rememberSaveable { mutableStateOf(true) }
             BaixaTubeTheme(dark) {
@@ -70,11 +70,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun handleShareIntent() {
-        if (intent?.action != Intent.ACTION_SEND) return
-        val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleShareIntent(intent)
+    }
+
+    private fun handleShareIntent(srcIntent: Intent?) {
+        if (srcIntent?.action != Intent.ACTION_SEND) return
+        val text = srcIntent.getStringExtra(Intent.EXTRA_TEXT) ?: return
         val url = Regex("https?://\\S+").find(text)?.value?.trim() ?: return
         vm.url = url
+        vm.tab = 0
     }
 }
 

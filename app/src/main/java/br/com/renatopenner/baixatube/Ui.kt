@@ -1,5 +1,6 @@
 package br.com.renatopenner.baixatube
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -532,12 +533,18 @@ fun mimeFor(file: File): String = when (file.extension.lowercase(Locale.US)) {
     else -> "*/*"
 }
 
-fun uriFor(ctx: Context, file: File): Uri =
+fun uriFor(ctx: Context, file: File): Uri? = runCatching {
     FileProvider.getUriForFile(ctx, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
+}.getOrNull()
 
 fun openFile(ctx: Context, file: File) {
+    val uri = uriFor(ctx, file)
+    if (uri == null) {
+        Toast.makeText(ctx, "Arquivo não encontrado", Toast.LENGTH_SHORT).show()
+        return
+    }
     val intent = Intent(Intent.ACTION_VIEW)
-        .setDataAndType(uriFor(ctx, file), mimeFor(file))
+        .setDataAndType(uri, mimeFor(file))
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
     runCatching { ctx.startActivity(intent) }.onFailure {
         Toast.makeText(ctx, "Nenhum app para abrir .${file.extension}", Toast.LENGTH_SHORT).show()
@@ -545,11 +552,26 @@ fun openFile(ctx: Context, file: File) {
 }
 
 fun shareFile(ctx: Context, file: File) {
-    val intent = Intent(Intent.ACTION_SEND)
-        .setType(mimeFor(file))
-        .putExtra(Intent.EXTRA_STREAM, uriFor(ctx, file))
-        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    runCatching { ctx.startActivity(Intent.createChooser(intent, "Compartilhar")) }
+    val uri = uriFor(ctx, file)
+    if (uri == null) {
+        Toast.makeText(ctx, "Arquivo não encontrado para compartilhar", Toast.LENGTH_SHORT).show()
+        return
+    }
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = mimeFor(file)
+        putExtra(Intent.EXTRA_STREAM, uri)
+        clipData = ClipData.newRawUri(file.name, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    val chooser = Intent.createChooser(intent, "Compartilhar ${file.name}").apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    runCatching {
+        ctx.startActivity(chooser)
+    }.onFailure { e ->
+        Toast.makeText(ctx, "Erro ao abrir compartilhamento: ${e.message}", Toast.LENGTH_SHORT).show()
+    }
 }
 
 fun openFolder(ctx: Context) {
@@ -639,8 +661,8 @@ fun SavedScreen(vm: MainViewModel, modifier: Modifier = Modifier) {
             items(vm.savedFiles, key = { it.name }) { item ->
                 SavedRow(
                     item = item,
-                    onOpen = { vm.openSaved(item) },
-                    onShare = { vm.shareSaved(item) },
+                    onOpen = { Saved.open(ctx, item) },
+                    onShare = { Saved.share(ctx, item) },
                     onDelete = { vm.deleteSaved(item) },
                 )
             }

@@ -66,9 +66,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun openSaved(item: SavedFile) = Saved.open(getApplication(), item)
+    fun openSaved(ctx: Context = getApplication(), item: SavedFile) = Saved.open(ctx, item)
 
-    fun shareSaved(item: SavedFile) = Saved.share(getApplication(), item)
+    fun shareSaved(ctx: Context = getApplication(), item: SavedFile) = Saved.share(ctx, item)
 
     fun deleteSaved(item: SavedFile) {
         viewModelScope.launch {

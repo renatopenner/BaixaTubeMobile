@@ -95,7 +95,11 @@ object Saved {
     }
 
     fun open(ctx: Context, item: SavedFile) {
-        val data = item.uri ?: item.file?.let { uriFor(ctx, it) } ?: return
+        val data = item.uri ?: item.file?.let { uriFor(ctx, it) }
+        if (data == null) {
+            Toast.makeText(ctx, "Arquivo não encontrado", Toast.LENGTH_SHORT).show()
+            return
+        }
         val intent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(data, item.mime)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -105,12 +109,26 @@ object Saved {
     }
 
     fun share(ctx: Context, item: SavedFile) {
-        val data = item.uri ?: item.file?.let { uriFor(ctx, it) } ?: return
-        val intent = Intent(Intent.ACTION_SEND)
-            .setType(item.mime)
-            .putExtra(Intent.EXTRA_STREAM, data)
-            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        runCatching { ctx.startActivity(Intent.createChooser(intent, "Compartilhar")) }
+        val data = item.uri ?: item.file?.let { uriFor(ctx, it) }
+        if (data == null) {
+            Toast.makeText(ctx, "Arquivo não encontrado para compartilhar", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = item.mime
+            putExtra(Intent.EXTRA_STREAM, data)
+            clipData = ClipData.newRawUri(item.name, data)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        val chooser = Intent.createChooser(intent, "Compartilhar ${item.name}").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        runCatching {
+            ctx.startActivity(chooser)
+        }.onFailure { e ->
+            Toast.makeText(ctx, "Erro ao abrir compartilhamento: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun delete(ctx: Context, item: SavedFile): Boolean {
